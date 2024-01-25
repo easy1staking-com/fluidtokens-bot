@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.fluidtokens.nft.borrow.model.TransactionOutputTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2024-01-25T07:09:11" hostname="Giovannis-MacBook-Pro.local" time="0.037">
+  <properties/>
+  <testcase name="testSorting()" classname="com.fluidtokens.nft.borrow.model.TransactionOutputTest" time="0.037"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
