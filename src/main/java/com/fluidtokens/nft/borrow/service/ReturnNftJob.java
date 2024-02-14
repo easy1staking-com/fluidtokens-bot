@@ -18,12 +18,14 @@ import com.bloxbean.cardano.client.quicktx.ScriptTx;
 import com.bloxbean.cardano.client.transaction.spec.Transaction;
 import com.bloxbean.cardano.client.util.HexUtil;
 import com.fluidtokens.nft.borrow.client.FluidtokensApi;
+import com.fluidtokens.nft.borrow.model.TransactionOutput;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -54,6 +56,8 @@ public class ReturnNftJob implements Runnable {
         log.info("found {} expired rents", expiredRents.size());
 
         if (!expiredRents.isEmpty()) {
+
+            expiredRents.sort(Comparator.comparing(o -> TransactionOutput.fromString(o.rentUtxoId())));
 
             // Loading Script
             var poolScript = PlutusV2Script.deserialize(new ByteString(HexUtil.decodeHexString(FLUIDTOKENS_SCRIPTS_BYTES)));
