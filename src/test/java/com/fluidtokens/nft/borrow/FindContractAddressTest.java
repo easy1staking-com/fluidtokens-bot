@@ -4,14 +4,15 @@ import co.nstant.in.cbor.model.ByteString;
 import com.bloxbean.cardano.client.account.Account;
 import com.bloxbean.cardano.client.address.Address;
 import com.bloxbean.cardano.client.address.AddressProvider;
+import com.bloxbean.cardano.client.address.Credential;
 import com.bloxbean.cardano.client.api.exception.ApiException;
 import com.bloxbean.cardano.client.api.model.Result;
 import com.bloxbean.cardano.client.api.model.Utxo;
 import com.bloxbean.cardano.client.backend.blockfrost.common.Constants;
 import com.bloxbean.cardano.client.backend.blockfrost.service.BFBackendService;
 import com.bloxbean.cardano.client.common.model.Networks;
-import com.bloxbean.cardano.client.crypto.bip32.key.HdPublicKey;
 import com.bloxbean.cardano.client.exception.CborDeserializationException;
+import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.bloxbean.cardano.client.function.helper.SignerProviders;
 import com.bloxbean.cardano.client.plutus.spec.BigIntPlutusData;
 import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
@@ -41,9 +42,13 @@ public class FindContractAddressTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    public void findContractAddress() throws CborDeserializationException, ApiException, JsonProcessingException {
+    public void findContractAddress() throws CborDeserializationException, ApiException, JsonProcessingException, CborSerializationException {
 
-        BFBackendService bfBackendService = new BFBackendService(Constants.BLOCKFROST_MAINNET_URL, "mainnetKWaNkQcrF1erC3u3SZjaFxZiM2M20jFM");
+        var botAccount = new Account("");
+        log.info("INIT - Account address: {}", botAccount.baseAddress());
+
+
+        BFBackendService bfBackendService = new BFBackendService(Constants.BLOCKFROST_MAINNET_URL, "");
 
         var poolScript = PlutusV2Script.deserialize(new ByteString(HexUtil.decodeHexString(SCRIPT)));
 
@@ -55,16 +60,12 @@ public class FindContractAddressTest {
         fluidtokensApi.initWebClient();
 
         List<Rents> expiredRents = fluidtokensApi.getExpiredRents();
-        expiredRents.subList(0, 3).forEach(rent -> log.info("rent: {}", rent));
 
         log.info("after");
         expiredRents.sort(Comparator.comparing(o -> TransactionOutput.fromString(o.rentUtxoId())));
 
 
-        expiredRents.subList(0, 3).forEach(rent -> log.info("rent: {}", rent));
-
-
-        ScriptTx scriptTx = new ScriptTx()
+        final ScriptTx scriptTx = new ScriptTx()
                 .readFrom("2c812d5ba6d240eea79dca528f22a3854adcaac140f3151ecbcf5d945c5981e3", 0);
 
 
@@ -85,8 +86,14 @@ public class FindContractAddressTest {
                 String inlineDatum = utxo.getInlineDatum();
 
                 var stakingAddress = rent.rentData().renterAddress().get(1);
-                var hdKey = HdPublicKey.fromBytes(HexUtil.decodeHexString(stakingAddress));
-                var addressOwner = AddressProvider.getBaseAddress(poolScript, hdKey, Networks.mainnet());
+                log.info("stakingAddress: {}", stakingAddress);
+
+                var delegationCredentials = Credential.fromKey(stakingAddress);
+
+                var paymentCredentials = Credential.fromScript(poolScript.getScriptHash());
+
+                var addressOwner = AddressProvider.getBaseAddress(paymentCredentials, delegationCredentials, Networks.mainnet());
+                log.info("addressOwner: {}", addressOwner.getAddress());
 
                 getNewDatum(inlineDatum)
                         .ifPresent(newDatum -> {
@@ -94,26 +101,35 @@ public class FindContractAddressTest {
                             scriptTx.payToContract(addressOwner.getAddress(), utxo.getAmount(), newDatum);
                         });
 
-            } catch (ApiException e) {
+            } catch (ApiException | CborSerializationException e) {
                 throw new RuntimeException(e);
             }
 
-
         }
+
+        scriptTx.withChangeAddress(botAccount.baseAddress());
 
         if (!expiredRents.isEmpty()) {
 
             QuickTxBuilder quickTxBuilder = new QuickTxBuilder(bfBackendService);
 
-
             var slot = bfBackendService.getBlockService().getLatestBlock().getValue().getSlot();
 
             Transaction transaction = quickTxBuilder
                     .compose(scriptTx)
-                    .withSigner(SignerProviders.signerFrom(new Account()))
+                    .withSigner(SignerProviders.signerFrom(botAccount))
+//                    .withRequiredSigners(botAccount.getBaseAddress())
                     .validFrom(slot - 120L)
                     .validTo(slot + 600L)
+                    .feePayer(botAccount.baseAddress())
+//                    .withTxEvaluator(new NoOpTransactionEvaluator())
+//                    .ignoreScriptCostEvaluationError(true)
                     .buildAndSign();
+
+            var foo = bfBackendService.getTransactionService().submitTransaction(transaction.serialize());
+
+            log.info("foo: {}", foo.getResponse());
+            log.info("foo: {}", foo.code());
 
             log.info("Transaction: {}", objectMapper.writeValueAsString(transaction));
 
