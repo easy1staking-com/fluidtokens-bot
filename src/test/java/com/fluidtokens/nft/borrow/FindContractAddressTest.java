@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fluidtokens.nft.borrow.client.FluidtokensApi;
 import com.fluidtokens.nft.borrow.model.Rents;
 import com.fluidtokens.nft.borrow.model.TransactionOutput;
+import com.fluidtokens.nft.borrow.service.NoOpTransactionEvaluator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -44,11 +45,11 @@ public class FindContractAddressTest {
     @Test
     public void findContractAddress() throws CborDeserializationException, ApiException, JsonProcessingException, CborSerializationException {
 
-        var botAccount = new Account("");
+        var botAccount = new Account("clean script brown bleak camp claim stock mad thumb fly fiber version cradle lawsuit index lottery song faith keep size decorate senior heart brain");
         log.info("INIT - Account address: {}", botAccount.baseAddress());
 
 
-        BFBackendService bfBackendService = new BFBackendService(Constants.BLOCKFROST_MAINNET_URL, "");
+        BFBackendService bfBackendService = new BFBackendService(Constants.BLOCKFROST_MAINNET_URL, "mainnetKWaNkQcrF1erC3u3SZjaFxZiM2M20jFM");
 
         var poolScript = PlutusV2Script.deserialize(new ByteString(HexUtil.decodeHexString(SCRIPT)));
 
@@ -98,6 +99,7 @@ public class FindContractAddressTest {
                 getNewDatum(inlineDatum)
                         .ifPresent(newDatum -> {
                             scriptTx.collectFrom(utxo, ConstrPlutusData.of(4, BigIntPlutusData.of(j)));
+                            log.info("to: {}, amount: {}", addressOwner.getAddress(), utxo.getAmount());
                             scriptTx.payToContract(addressOwner.getAddress(), utxo.getAmount(), newDatum);
                         });
 
@@ -117,13 +119,14 @@ public class FindContractAddressTest {
 
             Transaction transaction = quickTxBuilder
                     .compose(scriptTx)
+                    .mergeOutputs(false)
                     .withSigner(SignerProviders.signerFrom(botAccount))
 //                    .withRequiredSigners(botAccount.getBaseAddress())
                     .validFrom(slot - 120L)
                     .validTo(slot + 600L)
                     .feePayer(botAccount.baseAddress())
-//                    .withTxEvaluator(new NoOpTransactionEvaluator())
-//                    .ignoreScriptCostEvaluationError(true)
+                    .withTxEvaluator(new NoOpTransactionEvaluator())
+                    .ignoreScriptCostEvaluationError(true)
                     .buildAndSign();
 
             var foo = bfBackendService.getTransactionService().submitTransaction(transaction.serialize());

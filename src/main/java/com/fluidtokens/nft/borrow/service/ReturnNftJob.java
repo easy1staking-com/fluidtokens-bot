@@ -15,7 +15,6 @@ import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
 import com.bloxbean.cardano.client.plutus.spec.PlutusV2Script;
 import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.ScriptTx;
-import com.bloxbean.cardano.client.transaction.spec.Transaction;
 import com.bloxbean.cardano.client.util.HexUtil;
 import com.fluidtokens.nft.borrow.client.FluidtokensApi;
 import com.fluidtokens.nft.borrow.model.TransactionOutput;
@@ -105,8 +104,9 @@ public class ReturnNftJob implements Runnable {
 
             var slot = bfBackendService.getBlockService().getLatestBlock().getValue().getSlot();
 
-             quickTxBuilder
+            quickTxBuilder
                     .compose(scriptTx)
+                    .mergeOutputs(false)
                     .withSigner(SignerProviders.signerFrom(account))
                     .validFrom(slot - 120L)
                     .validTo(slot + 600L)
