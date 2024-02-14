@@ -1,0 +1,6 @@
+wallet:
+  mnemonic: ${WALLET_MNEMONIC:}
+
+blockfrost:
+  url: ${BLOCKFROST_URL:https://cardano-mainnet.blockfrost.io/api/v0/}
+  key: ${BLOCKFROST_KEY:}

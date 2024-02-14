@@ -29,7 +29,6 @@ public class FluidtokensApi {
     @PostConstruct
     public void initWebClient() {
         client = WebClient.builder()
-//                .baseUrl("https://api.fluidtokens.com/get-bs-available-pools?page=0")
                 .baseUrl("https://api.fluidtokens.com/get-bs-available-pools?expiredOnly=true&page=0")
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
