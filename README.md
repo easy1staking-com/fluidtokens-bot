@@ -21,3 +21,16 @@ When no expired rents are found logs will look like...
 2024-02-14T14:42:19.682Z  INFO 1 --- [   scheduling-1] c.f.nft.borrow.service.ReturnNftJob      : found 0 expired rents
 2024-02-14T14:42:19.683Z  INFO 1 --- [   scheduling-1] c.f.nft.borrow.service.ReturnNftJob      : Completed
 ```
+
+While if expired rents are found, it'll look something like...
+
+```bash
+2024-02-14T16:25:20.030Z  INFO 1 --- [   scheduling-1] c.f.nft.borrow.service.ReturnNftJob      : Running
+2024-02-14T16:25:20.937Z  INFO 1 --- [   scheduling-1] c.f.nft.borrow.service.ReturnNftJob      : found 2 expired rents
+2024-02-14T16:25:23.480Z  INFO 1 --- [   scheduling-1] c.b.c.client.quicktx.QuickTxBuilder      : [Submitted] Tx: 90154f6d9fc13acf0f95610ce27d80dbdae4bd9850c3fae24af59534b5ced550
+2024-02-14T16:25:23.664Z  INFO 1 --- [   scheduling-1] c.b.c.client.quicktx.QuickTxBuilder      : [Pending] Tx: 90154f6d9fc13acf0f95610ce27d80dbdae4bd9850c3fae24af59534b5ced550
+2024-02-14T16:25:25.754Z  INFO 1 --- [   scheduling-1] c.b.c.client.quicktx.QuickTxBuilder      : [Pending] Tx: 90154f6d9fc13acf0f95610ce27d80dbdae4bd9850c3fae24af59534b5ced550
+2024-02-14T16:25:27.833Z  INFO 1 --- [   scheduling-1] c.b.c.client.quicktx.QuickTxBuilder      : [Pending] Tx: 90154f6d9fc13acf0f95610ce27d80dbdae4bd9850c3fae24af59534b5ced550
+2024-02-14T16:25:29.890Z  INFO 1 --- [   scheduling-1] c.b.c.client.quicktx.QuickTxBuilder      : [Confirmed] Tx: 90154f6d9fc13acf0f95610ce27d80dbdae4bd9850c3fae24af59534b5ced550
+2024-02-14T16:25:29.890Z  INFO 1 --- [   scheduling-1] c.f.nft.borrow.service.ReturnNftJob      : Completed
+```
