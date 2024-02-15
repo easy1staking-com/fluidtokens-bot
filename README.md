@@ -1,5 +1,40 @@
 # Fluid Tokens BOT
 
+## Datum Type
+
+``` 
+type Datum {
+  //The owner
+  owner_address: Address,
+  //The daily price policy and asset
+  daily_rent_policy: PolicyId,
+  daily_rent_asset: AssetName,
+  //daily amount -> This is daily rent for NFT while for ADA it is derived from APY: 5% APY is 136000 lovelace as daily rent while 20% is 548000 lovelace daily rent
+  daily_rent_amount: Int,
+  pool_policy: PolicyId,
+  pool_asset: AssetName,
+  //If it's a pool the starting value of the utxo otherwise is the NFT
+  //1n for NFT, amount for tokens
+  pool_amount: Int,
+  //this is because decimals are harder for nft divider is 1 but for ADA divider is 1000000 (1M)
+  pool_divider: Int,
+  //the current address that is the tenant, while available the same as the owner
+  tenant_address: Address,
+  deadline_date: Int,
+  //end of active rent -> Batchers should be able to send it back to owner
+  //not possible to rent after this date
+  expiration_offer: Int,
+  //for fees
+  fluid_address: Address,
+  //this is a millesimal percentage so fee_pergentage=10=1% fee
+  fee_percentage: Int,
+  //min days
+  min_days: Int,
+  //if 1 daily rent if 5 I can only rent multiple of 5 days
+  multiplier: Int,
+}
+```
+
 ## Run BOT w/ Docker
 
 In order to run this bot you need a `mainnet` account on blockfrost, and a 24-words seed cardano wallet with a bunch of ada.
