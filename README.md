@@ -34,3 +34,15 @@ While if expired rents are found, it'll look something like...
 2024-02-14T16:25:29.890Z  INFO 1 --- [   scheduling-1] c.b.c.client.quicktx.QuickTxBuilder      : [Confirmed] Tx: 90154f6d9fc13acf0f95610ce27d80dbdae4bd9850c3fae24af59534b5ced550
 2024-02-14T16:25:29.890Z  INFO 1 --- [   scheduling-1] c.f.nft.borrow.service.ReturnNftJob      : Completed
 ```
+
+## Resources
+
+This BOT has developed by Giovanni, SPO of [EASY1 Stake Pool](https://easy1staking.com), using the following languages and frameworks:
+
+1. Java JDK 17
+2. Spring Boot 3.1.5
+3. [Cardano Client Lib 0.5.0](https://github.com/bloxbean/cardano-client-lib)
+
+## Support 
+
+Like what you're seeing? Support me by delegating to the [EASY1 Stake Pool](https://pool.pm/20df8645abddf09403ba2656cda7da2cd163973a5e439c6e43dcbea9)
