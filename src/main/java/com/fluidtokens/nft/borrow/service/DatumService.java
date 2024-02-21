@@ -1,13 +1,19 @@
 package com.fluidtokens.nft.borrow.service;
 
 import com.bloxbean.cardano.client.exception.CborDeserializationException;
+import com.bloxbean.cardano.client.plutus.spec.BigIntPlutusData;
+import com.bloxbean.cardano.client.plutus.spec.BytesPlutusData;
 import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
 import com.bloxbean.cardano.client.plutus.spec.PlutusData;
 import com.bloxbean.cardano.client.util.HexUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.TimeZone;
 
 @Service
 @Slf4j
@@ -42,6 +48,25 @@ public class DatumService {
         }
 
 
+    }
+
+    public boolean isLoanExpired(String inlineDatum) {
+        try {
+            var rentDatum = (ConstrPlutusData) PlutusData.deserialize(HexUtil.decodeHexString(inlineDatum));
+            var dataItems = rentDatum.getData().getPlutusDataList();
+
+            var owner = ((BytesPlutusData) dataItems.get(0)).getValue();
+            var tenant = ((BytesPlutusData) dataItems.get(8)).getValue();
+            var deadline = ((BigIntPlutusData) dataItems.get(9)).getValue().longValue();
+
+            var loanDeadline = LocalDateTime.ofInstant(Instant.ofEpochMilli(deadline), TimeZone.getDefault().toZoneId());
+
+            return !Arrays.equals(owner, tenant) && LocalDateTime.now().isAfter(loanDeadline);
+
+        } catch (CborDeserializationException e) {
+            log.warn(String.format("could not parse datum: %s", inlineDatum), e);
+            return false;
+        }
     }
 
 }
