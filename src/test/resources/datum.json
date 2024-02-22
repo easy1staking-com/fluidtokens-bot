@@ -1,0 +1,134 @@
+{
+  "constructor": 0,
+  "fields": [
+    {
+      "constructor": 0,
+      "fields": [
+        {
+          "constructor": 0,
+          "fields": [
+            {
+              "bytes": "4f5fc7597f264b8d6189c8bbfafb9aa6c2d986b843aba34c8b1c734a"
+            }
+          ]
+        },
+        {
+          "constructor": 0,
+          "fields": [
+            {
+              "constructor": 0,
+              "fields": [
+                {
+                  "constructor": 0,
+                  "fields": [
+                    {
+                      "bytes": "b92fc658be922df3036e13c8bd6b6bb864183626f2b601ff6609746b"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bytes": ""
+    },
+    {
+      "bytes": ""
+    },
+    {
+      "int": 247
+    },
+    {
+      "bytes": ""
+    },
+    {
+      "bytes": ""
+    },
+    {
+      "int": 1500000000
+    },
+    {
+      "int": 1000000
+    },
+    {
+      "constructor": 0,
+      "fields": [
+        {
+          "constructor": 0,
+          "fields": [
+            {
+              "bytes": "f940339366722b5f6abbd14ed1ea4da28399a28a6a0c34a9f9552bd0"
+            }
+          ]
+        },
+        {
+          "constructor": 0,
+          "fields": [
+            {
+              "constructor": 0,
+              "fields": [
+                {
+                  "constructor": 0,
+                  "fields": [
+                    {
+                      "bytes": "dedb6328a9a2f48eec9acf6852dc63d60dfcd76889471e9ed046b85d"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "int": 1712805901000
+    },
+    {
+      "int": 1714041599843
+    },
+    {
+      "constructor": 0,
+      "fields": [
+        {
+          "constructor": 0,
+          "fields": [
+            {
+              "bytes": "4f5fc7597f264b8d6189c8bbfafb9aa6c2d986b843aba34c8b1c734a"
+            }
+          ]
+        },
+        {
+          "constructor": 0,
+          "fields": [
+            {
+              "constructor": 0,
+              "fields": [
+                {
+                  "constructor": 0,
+                  "fields": [
+                    {
+                      "bytes": "b92fc658be922df3036e13c8bd6b6bb864183626f2b601ff6609746b"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "int": 0
+    },
+    {
+      "int": 1
+    },
+    {
+      "int": 5
+    }
+  ]
+}

@@ -1,6 +1,68 @@
+spring:
+  profiles:
+    active: ${SPRING_ACTIVE_PROFILES:}
+  flyway:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fluidtokens}
+    user: ${DB_USERNAME:fluidtokens}
+    password: ${DB_PASSWORD:password}
+    schemas: ${DB_SCHEMA:}
+    locations:
+      - classpath:db/store/{vendor}
+#      - classpath:db/store/fluidtokens
+    out-of-order: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fluidtokens}
+    username: ${DB_USERNAME:fluidtokens}
+    password: ${DB_PASSWORD:password}
+
 wallet:
   mnemonic: ${WALLET_MNEMONIC:}
 
 blockfrost:
   url: ${BLOCKFROST_URL:https://cardano-mainnet.blockfrost.io/api/v0/}
   key: ${BLOCKFROST_KEY:}
+
+dryRun: ${DRY_RUN:false}
+
+store:
+  cardano:
+    host: ${REMOTE_NODE_URL:relays-new.cardano-mainnet.iohk.io}
+    port: ${REMOTE_NODE_PORT:3001}
+    protocol-magic: 764824073
+    # Start from the block that minted the ref input for the contract
+    sync-start-slot: ${YACI_STORE_CARDANO_SYNC_START_SLOT:112127289}
+    sync-start-blockhash: ${YACI_STORE_CARDANO_SYNC_START_BLOCK_HASH:da8a9a37bdc9bc610e30fa3f66d1895fbd8618fd87dd063ba93bb21a66ffcd5d}
+  blocks:
+    epoch-calculation-interval=14400:  # 14400 = 4 hours
+
+apiPrefix: /api/v1
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  flyway:
+    url: ${DB_URL:jdbc:h2:./data/db}
+    user: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:password}
+  datasource:
+    url: ${DB_URL:jdbc:h2:./data/db}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:password}
+---
+spring:
+  config:
+    activate:
+      on-profile: local-db
+  flyway:
+    url: ${DB_URL:jdbc:h2:./data/db}
+    user: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:password}
+  datasource:
+    url: ${DB_URL:jdbc:h2:./data/db}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:password}
+  h2:
+    console:
+      enabled: true
