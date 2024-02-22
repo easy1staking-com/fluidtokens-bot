@@ -108,7 +108,7 @@ public class ReturnNftJob implements Runnable {
 
             var slot = bfBackendService.getBlockService().getLatestBlock().getValue().getSlot();
 
-            var stuff = quickTxBuilder
+            var transaction = quickTxBuilder
                     .compose(scriptTx)
                     .mergeOutputs(false)
                     .withSigner(SignerProviders.signerFrom(account))
@@ -117,10 +117,10 @@ public class ReturnNftJob implements Runnable {
                     .feePayer(account.baseAddress());
 
             if (dryRun) {
-                var tx = stuff.build();
+                var tx = transaction.build();
                 log.info("tx: {}", objectMapper.writeValueAsString(tx));
             } else {
-                stuff.completeAndWait();
+                transaction.completeAndWait();
             }
 
 
