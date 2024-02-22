@@ -59,7 +59,15 @@ public class ReturnNftJob implements Runnable {
 
         log.info("Running");
 
-        var expiredRents = rentService.findAllRents()
+        var allRents = rentService.findAllRents();
+
+        var nextLoan = allRents.stream()
+                .filter(utxoRent -> utxoRent.rent().isLent())
+                .min(Comparator.comparing(utxoRent -> utxoRent.rent().deadline()));
+        
+        nextLoan.ifPresent(loan -> log.info("Next loan: {}", loan));
+
+        var expiredRents = allRents
                 .stream()
                 .filter(utxoRent -> utxoRent.rent().canBeReturned())
                 .sorted(Comparator.comparing(UtxoRent::transactionOutput))
