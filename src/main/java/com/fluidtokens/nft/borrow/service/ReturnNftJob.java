@@ -13,23 +13,20 @@ import com.bloxbean.cardano.client.plutus.spec.BigIntPlutusData;
 import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
 import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.ScriptTx;
-import com.bloxbean.cardano.yaci.store.utxo.storage.impl.repository.UtxoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fluidtokens.nft.borrow.client.FluidtokensApi;
 import com.fluidtokens.nft.borrow.model.TransactionOutput;
+import com.fluidtokens.nft.borrow.model.UtxoRent;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,7 +48,7 @@ public class ReturnNftJob implements Runnable {
     @Autowired
     private DatumService datumService;
     @Autowired
-    private UtxoRepository utxoRepository;
+    private RentService rentService;
     @Autowired
     private FluidtokensRentContractService fluidtokensRentContractService;
 
@@ -69,16 +66,12 @@ public class ReturnNftJob implements Runnable {
 
         log.info("Running");
 
+        var rents = rentService.findAllRents();
+        rents.stream().filter(rent -> !rent.rent().owner().getAddress().equals(rent.rent().tenant().getAddress())).limit(10)
+                .forEach(rent -> log.info("rent: {}", rent));
+        log.info("rent[-1]: {}", rents.getLast());
 
-        var loansUtxosOpt = utxoRepository.findUnspentByOwnerPaymentCredential(fluidtokensRentContractService.getPaymentCredentialsHex(), Pageable.unpaged());
-
-        var expiredLoans = loansUtxosOpt
-                .map(loansUtxos -> loansUtxos.stream().filter(utxo -> datumService.isLoanExpired(utxo.getInlineDatum())))
-                .stream()
-                .flatMap(Function.identity())
-                .map(utxo -> new TransactionOutput(utxo.getTxHash(), utxo.getOutputIndex()))
-                .collect(Collectors.toSet());
-
+        var expiredLoans = rents.stream().map(UtxoRent::transactionOutput).collect(Collectors.toSet());
 
         var expiredRents = fluidtokensApi.getExpiredRents();
         if (!expiredRents.isEmpty()) {

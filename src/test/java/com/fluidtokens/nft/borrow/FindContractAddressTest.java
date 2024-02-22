@@ -25,7 +25,7 @@ import com.bloxbean.cardano.client.util.HexUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fluidtokens.nft.borrow.client.FluidtokensApi;
-import com.fluidtokens.nft.borrow.model.Rents;
+import com.fluidtokens.nft.borrow.model.external.api.Rents;
 import com.fluidtokens.nft.borrow.model.TransactionOutput;
 import com.fluidtokens.nft.borrow.service.NoOpTransactionEvaluator;
 import lombok.extern.slf4j.Slf4j;

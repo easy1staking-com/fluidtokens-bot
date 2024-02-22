@@ -1,6 +1,6 @@
 package com.fluidtokens.nft.borrow.client;
 
-import com.fluidtokens.nft.borrow.model.Rents;
+import com.fluidtokens.nft.borrow.model.external.api.Rents;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;

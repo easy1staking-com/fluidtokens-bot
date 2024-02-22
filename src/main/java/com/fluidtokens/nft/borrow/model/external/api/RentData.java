@@ -1,4 +1,4 @@
-package com.fluidtokens.nft.borrow.model;
+package com.fluidtokens.nft.borrow.model.external.api;
 
 import java.math.BigInteger;
 import java.util.List;
