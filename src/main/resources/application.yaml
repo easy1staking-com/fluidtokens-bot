@@ -2,17 +2,17 @@ spring:
   profiles:
     active: ${SPRING_ACTIVE_PROFILES:}
   flyway:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/liqwid_database}
-    user: ${DB_USERNAME:liqwid}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fluidtokens}
+    user: ${DB_USERNAME:fluidtokens}
     password: ${DB_PASSWORD:password}
     schemas: ${DB_SCHEMA:}
     locations:
       - classpath:db/store/{vendor}
-      - classpath:db/migration/liqwidfinance
+#      - classpath:db/store/fluidtokens
     out-of-order: true
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/liqwid_database}
-    username: ${DB_USERNAME:liqwid}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fluidtokens}
+    username: ${DB_USERNAME:fluidtokens}
     password: ${DB_PASSWORD:password}
 
 wallet:
@@ -21,6 +21,8 @@ wallet:
 blockfrost:
   url: ${BLOCKFROST_URL:https://cardano-mainnet.blockfrost.io/api/v0/}
   key: ${BLOCKFROST_KEY:}
+
+dryRun: ${DRY_RUN:false}
 
 store:
   cardano:
@@ -61,3 +63,6 @@ spring:
     url: ${DB_URL:jdbc:h2:./data/db}
     username: ${DB_USERNAME:sa}
     password: ${DB_PASSWORD:password}
+  h2:
+    console:
+      enabled: true

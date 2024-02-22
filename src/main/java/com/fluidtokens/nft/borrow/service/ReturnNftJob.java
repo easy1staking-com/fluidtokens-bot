@@ -2,8 +2,6 @@ package com.fluidtokens.nft.borrow.service;
 
 import com.bloxbean.cardano.client.account.Account;
 import com.bloxbean.cardano.client.address.AddressProvider;
-import com.bloxbean.cardano.client.address.Credential;
-import com.bloxbean.cardano.client.api.exception.ApiException;
 import com.bloxbean.cardano.client.api.model.Result;
 import com.bloxbean.cardano.client.api.model.Utxo;
 import com.bloxbean.cardano.client.backend.blockfrost.service.BFBackendService;
@@ -14,8 +12,6 @@ import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
 import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.ScriptTx;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fluidtokens.nft.borrow.client.FluidtokensApi;
-import com.fluidtokens.nft.borrow.model.TransactionOutput;
 import com.fluidtokens.nft.borrow.model.UtxoRent;
 import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
@@ -27,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -43,8 +38,6 @@ public class ReturnNftJob implements Runnable {
     private Account account;
     @Autowired
     private BFBackendService bfBackendService;
-    @Autowired
-    private FluidtokensApi fluidtokensApi;
     @Autowired
     private DatumService datumService;
     @Autowired
@@ -66,28 +59,13 @@ public class ReturnNftJob implements Runnable {
 
         log.info("Running");
 
-        var actualExpiredRents = rentService.findAllRents()
+        var expiredRents = rentService.findAllRents()
                 .stream()
-                .filter(utxoRent -> utxoRent.rent().isExpired())
-                .map(UtxoRent::transactionOutput)
-                .collect(Collectors.toSet());
+                .filter(utxoRent -> utxoRent.rent().canBeReturned())
+                .sorted(Comparator.comparing(UtxoRent::transactionOutput))
+                .toList();
 
-        var expiredRents = fluidtokensApi.getExpiredRents();
         if (!expiredRents.isEmpty()) {
-
-            var expectedExpiredLoans = expiredRents.stream().map(rent -> {
-                        var utxoParts = rent.rentUtxoId().split("#");
-                        var utxoHash = utxoParts[0];
-                        var utxoIndex = Integer.parseInt(utxoParts[1]);
-                        return new TransactionOutput(utxoHash, utxoIndex);
-                    })
-                    .collect(Collectors.toSet());
-
-            actualExpiredRents.forEach(loanTO -> log.info("actual loan to: {}", loanTO));
-            expectedExpiredLoans.forEach(loanTO -> log.info("expected loan to: {}", loanTO));
-            log.info("Equals? {}", actualExpiredRents.equals(expectedExpiredLoans));
-
-            expiredRents.sort(Comparator.comparing(o -> TransactionOutput.fromString(o.rentUtxoId())));
 
             final ScriptTx scriptTx = new ScriptTx()
                     .readFrom(SCRIPT_REF_INPUT_HASH, SCRIPT_REF_INPUT_INDEX);
@@ -96,10 +74,8 @@ public class ReturnNftJob implements Runnable {
                 var rent = expiredRents.get(i);
                 final var j = i;
 
-                var rentUtxo = rent.rentUtxoId();
-                var utxoParts = rentUtxo.split("#");
-                var utxoHash = utxoParts[0];
-                var utxoIndex = Integer.parseInt(utxoParts[1]);
+                var utxoHash = rent.transactionOutput().hash();
+                var utxoIndex = rent.transactionOutput().index();
 
                 try {
                     Result<Utxo> txOutputResult = bfBackendService.getUtxoService().getTxOutput(utxoHash, utxoIndex);
@@ -107,8 +83,7 @@ public class ReturnNftJob implements Runnable {
 
                     String inlineDatum = utxo.getInlineDatum();
 
-                    var stakingAddress = rent.rentData().renterAddress().get(1);
-                    var delegationCredentials = Credential.fromKey(stakingAddress);
+                    var delegationCredentials = rent.rent().owner().getDelegationCredential().get();
 
                     var addressOwner = AddressProvider.getBaseAddress(fluidtokensRentContractService.getPaymentCredentials(),
                             delegationCredentials,
@@ -120,7 +95,8 @@ public class ReturnNftJob implements Runnable {
                                 scriptTx.payToContract(addressOwner.getAddress(), utxo.getAmount(), newDatum);
                             });
 
-                } catch (ApiException e) {
+                } catch (Exception e) {
+                    log.warn("Error while processing utxo: {}:{}", utxoHash, utxoIndex);
                     throw new RuntimeException(e);
                 }
 
