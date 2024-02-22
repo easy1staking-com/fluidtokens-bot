@@ -66,17 +66,16 @@ public class ReturnNftJob implements Runnable {
 
         log.info("Running");
 
-        var rents = rentService.findAllRents();
-        rents.stream().filter(rent -> !rent.rent().owner().getAddress().equals(rent.rent().tenant().getAddress())).limit(10)
-                .forEach(rent -> log.info("rent: {}", rent));
-        log.info("rent[-1]: {}", rents.getLast());
-
-        var expiredLoans = rents.stream().map(UtxoRent::transactionOutput).collect(Collectors.toSet());
+        var actualExpiredRents = rentService.findAllRents()
+                .stream()
+                .filter(utxoRent -> utxoRent.rent().isExpired())
+                .map(UtxoRent::transactionOutput)
+                .collect(Collectors.toSet());
 
         var expiredRents = fluidtokensApi.getExpiredRents();
         if (!expiredRents.isEmpty()) {
 
-            var actualExpiredUtxos = expiredRents.stream().map(rent -> {
+            var expectedExpiredLoans = expiredRents.stream().map(rent -> {
                         var utxoParts = rent.rentUtxoId().split("#");
                         var utxoHash = utxoParts[0];
                         var utxoIndex = Integer.parseInt(utxoParts[1]);
@@ -84,9 +83,9 @@ public class ReturnNftJob implements Runnable {
                     })
                     .collect(Collectors.toSet());
 
-            expiredLoans.forEach(loanTO -> log.info("actual loan to: {}", loanTO));
-            actualExpiredUtxos.forEach(loanTO -> log.info("expected loan to: {}", loanTO));
-            log.info("Equals? {}", expiredLoans.equals(actualExpiredUtxos));
+            actualExpiredRents.forEach(loanTO -> log.info("actual loan to: {}", loanTO));
+            expectedExpiredLoans.forEach(loanTO -> log.info("expected loan to: {}", loanTO));
+            log.info("Equals? {}", actualExpiredRents.equals(expectedExpiredLoans));
 
             expiredRents.sort(Comparator.comparing(o -> TransactionOutput.fromString(o.rentUtxoId())));
 
