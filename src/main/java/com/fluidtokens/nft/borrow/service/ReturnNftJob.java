@@ -14,11 +14,15 @@ import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
 import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.ScriptTx;
 import com.bloxbean.cardano.yaci.store.utxo.storage.impl.repository.UtxoRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fluidtokens.nft.borrow.client.FluidtokensApi;
 import com.fluidtokens.nft.borrow.model.TransactionOutput;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,24 +34,33 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+//@AllArgsConstructor
 public class ReturnNftJob implements Runnable {
 
     private static final String SCRIPT_REF_INPUT_HASH = "2c812d5ba6d240eea79dca528f22a3854adcaac140f3151ecbcf5d945c5981e3";
     private static final int SCRIPT_REF_INPUT_INDEX = 0;
 
-    private final Account account;
+    @Value("${dryRun}")
+    private boolean dryRun;
+    @Autowired
+    private Account account;
+    @Autowired
+    private BFBackendService bfBackendService;
+    @Autowired
+    private FluidtokensApi fluidtokensApi;
+    @Autowired
+    private DatumService datumService;
+    @Autowired
+    private UtxoRepository utxoRepository;
+    @Autowired
+    private FluidtokensRentContractService fluidtokensRentContractService;
 
-    private final BFBackendService bfBackendService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final FluidtokensApi fluidtokensApi;
-
-    private final DatumService datumService;
-
-    private final UtxoRepository utxoRepository;
-
-    private final FluidtokensRentContractService fluidtokensRentContractService;
-
+    @PostConstruct
+    public void init() {
+        log.info("Running in dry-run mode: {}", dryRun);
+    }
 
     @SneakyThrows
     @Override
@@ -127,14 +140,21 @@ public class ReturnNftJob implements Runnable {
 
             var slot = bfBackendService.getBlockService().getLatestBlock().getValue().getSlot();
 
-            quickTxBuilder
+            var stuff = quickTxBuilder
                     .compose(scriptTx)
                     .mergeOutputs(false)
                     .withSigner(SignerProviders.signerFrom(account))
                     .validFrom(slot - 120L)
                     .validTo(slot + 600L)
-                    .feePayer(account.baseAddress())
-                    .completeAndWait();
+                    .feePayer(account.baseAddress());
+
+            if (dryRun) {
+                var tx = stuff.build();
+                log.info("tx: {}", objectMapper.writeValueAsString(tx));
+            } else {
+                stuff.completeAndWait();
+            }
+
 
         }
         log.info("Completed");
