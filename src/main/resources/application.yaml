@@ -26,8 +26,8 @@ dryRun: ${DRY_RUN:false}
 
 store:
   cardano:
-    host: ${REMOTE_NODE_URL:eu-central-1.relay.easy1staking.com}
-    port: ${REMOTE_NODE_PORT:30000}
+    host: ${REMOTE_NODE_URL:relays-new.cardano-mainnet.iohk.io}
+    port: ${REMOTE_NODE_PORT:3001}
     protocol-magic: 764824073
     # Start from the block that minted the ref input for the contract
     sync-start-slot: ${YACI_STORE_CARDANO_SYNC_START_SLOT:112127289}
