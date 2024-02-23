@@ -72,13 +72,25 @@ While if expired rents are found, it'll look something like...
 
 ## Resources
 
-This BOT has developed by Giovanni, SPO of [EASY1 Stake Pool](https://easy1staking.com), using the following languages and frameworks:
+This BOT has developed using the following languages and frameworks:
 
 1. Java JDK 17
 2. Spring Boot 3.1.5
 3. [Cardano Client Lib 0.5.1](https://github.com/bloxbean/cardano-client-lib)
 4. [Yaci Store](https://github.com/bloxbean/yaci-store)
 
-## Support 
+## Cardano Client Lib - Java
 
-Like what you're seeing? Support me by delegating to the [EASY1 Stake Pool](https://pool.pm/20df8645abddf09403ba2656cda7da2cd163973a5e439c6e43dcbea9)
+The Java Cardano Client Lib is growing fast and in this project you can see how easy it is to write sophisticated,
+production grade, code to achieve complex data indexing.
+
+Wants to find out more? Join the Blox Bean Discord server and join a vibrant committed java developer community. 
+
+Thanks
+
+## Kudos
+
+Hi! This is Giovanni from [EASY1 Stake Pool](https://pool.pm/20df8645abddf09403ba2656cda7da2cd163973a5e439c6e43dcbea9)
+I'm very happy to have contributed to the creation of this project for Fluidtokens.
+
+If you find this project interesting and wants to know more, follow me on github or [twitter](https://twitter.com/CryptoJoe101) 
