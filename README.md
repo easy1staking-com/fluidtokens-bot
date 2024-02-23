@@ -84,7 +84,7 @@ This BOT has developed using the following languages and frameworks:
 The Java Cardano Client Lib is growing fast and in this project you can see how easy it is to write sophisticated,
 production grade, code to achieve complex data indexing.
 
-Wants to find out more? Join the Blox Bean Discord server and join a vibrant committed java developer community. 
+Wants to find out more? Join the [Blox Bean Discord server](https://discord.gg/m3PxcPuv) and join a vibrant committed java developer community. 
 
 Thanks
 
