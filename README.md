@@ -47,7 +47,7 @@ BLOCKFROST_KEY=mainnet123sbffoehferuif
 
 Then run
 
-`docker run --rm --env-file .env -d speedwing/fluidtokens-bot:latest`
+`docker run --rm --env-file .env -d fluidtokens/fluidtokens-bot:latest`
 
 When no expired rents are found logs will look like...
 
@@ -76,7 +76,8 @@ This BOT has developed by Giovanni, SPO of [EASY1 Stake Pool](https://easy1staki
 
 1. Java JDK 17
 2. Spring Boot 3.1.5
-3. [Cardano Client Lib 0.5.0](https://github.com/bloxbean/cardano-client-lib)
+3. [Cardano Client Lib 0.5.1](https://github.com/bloxbean/cardano-client-lib)
+4. [Yaci Store](https://github.com/bloxbean/yaci-store)
 
 ## Support 
 
