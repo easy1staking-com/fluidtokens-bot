@@ -73,6 +73,10 @@ public class ReturnNftJob implements Runnable {
                 .sorted(Comparator.comparing(UtxoRent::transactionOutput))
                 .toList();
 
+        if (expiredRents.size() > 10) {
+            expiredRents = expiredRents.subList(0, 9);
+        }
+
         if (!expiredRents.isEmpty()) {
 
             final ScriptTx scriptTx = new ScriptTx()
