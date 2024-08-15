@@ -33,6 +33,8 @@ dependencies {
 	implementation('com.bloxbean.cardano:cardano-client-lib:0.6.0-preview2')
 	implementation('com.bloxbean.cardano:cardano-client-backend-blockfrost:0.6.0-preview2')
 
+	implementation("org.cardanofoundation:cf-cardano-conversions-java:1.1.3")
+	
 	implementation 'org.postgresql:postgresql:42.6.0'
 	testImplementation 'com.h2database:h2:2.1.214'
 

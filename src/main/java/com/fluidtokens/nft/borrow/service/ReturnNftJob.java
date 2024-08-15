@@ -11,9 +11,13 @@ import com.bloxbean.cardano.client.plutus.spec.BigIntPlutusData;
 import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
 import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.ScriptTx;
+import com.bloxbean.cardano.yaci.store.utxo.storage.impl.model.UtxoId;
+import com.bloxbean.cardano.yaci.store.utxo.storage.impl.repository.UtxoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fluidtokens.nft.borrow.model.UtxoRent;
+import com.fluidtokens.nft.borrow.util.UtxoUtil;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +26,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-//@AllArgsConstructor
+@RequiredArgsConstructor
 public class ReturnNftJob implements Runnable {
 
     private static final String SCRIPT_REF_INPUT_HASH = "2c812d5ba6d240eea79dca528f22a3854adcaac140f3151ecbcf5d945c5981e3";
@@ -34,16 +39,18 @@ public class ReturnNftJob implements Runnable {
 
     @Value("${dryRun}")
     private boolean dryRun;
-    @Autowired
-    private Account account;
-    @Autowired
-    private BFBackendService bfBackendService;
-    @Autowired
-    private DatumService datumService;
-    @Autowired
-    private RentService rentService;
-    @Autowired
-    private FluidtokensRentContractService fluidtokensRentContractService;
+
+    private final Account account;
+
+    private final BFBackendService bfBackendService;
+
+    private final DatumService datumService;
+
+    private final RentService rentService;
+
+    private final FluidtokensRentContractService fluidtokensRentContractService;
+
+    private final UtxoRepository utxoRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -90,10 +97,17 @@ public class ReturnNftJob implements Runnable {
                 var utxoIndex = rent.transactionOutput().index();
 
                 try {
-                    Result<Utxo> txOutputResult = bfBackendService.getUtxoService().getTxOutput(utxoHash, utxoIndex);
-                    Utxo utxo = txOutputResult.getValue();
 
-                    String inlineDatum = utxo.getInlineDatum();
+                    var utxoEntityOpt = utxoRepository.findById(new UtxoId(utxoHash, utxoIndex));
+                    if (utxoEntityOpt.isEmpty()) {
+                        log.warn("could not find utxo: {}:{}", utxoHash, utxoIndex);
+                        return;
+                    }
+
+                    var utxoEntity = utxoEntityOpt.get();
+                    var utxo = UtxoUtil.toUtxo(utxoEntity);
+
+                    String inlineDatum = utxoEntity.getInlineDatum();
 
                     var delegationCredentials = rent.rent().owner().getDelegationCredential().get();
 
