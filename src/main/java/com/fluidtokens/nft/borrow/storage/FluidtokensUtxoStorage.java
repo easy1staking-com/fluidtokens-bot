@@ -9,8 +9,11 @@ import com.bloxbean.cardano.yaci.store.utxo.storage.impl.repository.TxInputRepos
 import com.bloxbean.cardano.yaci.store.utxo.storage.impl.repository.UtxoRepository;
 import com.fluidtokens.nft.borrow.service.FluidtokensRentContractService;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.internal.TransactionManagement;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionManager;
 
 import java.util.List;
 
@@ -26,8 +29,9 @@ public class FluidtokensUtxoStorage extends UtxoStorageImpl {
                                   TxInputRepository spentOutputRepository,
                                   DSLContext dsl,
                                   UtxoCache utxoCache,
+                                  PlatformTransactionManager platformTransactionManager,
                                   FluidtokensRentContractService fluidtokensRentContractService) {
-        super(utxoRepository, spentOutputRepository, dsl, utxoCache);
+        super(utxoRepository, spentOutputRepository, dsl, utxoCache, platformTransactionManager);
         this.utxoRepository = utxoRepository;
         this.fluidtokensRentContractService = fluidtokensRentContractService;
 
