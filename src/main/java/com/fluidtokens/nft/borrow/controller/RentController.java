@@ -1,7 +1,10 @@
 package com.fluidtokens.nft.borrow.controller;
 
+import com.bloxbean.cardano.client.api.model.Utxo;
 import com.bloxbean.cardano.yaci.store.utxo.storage.impl.model.UtxoId;
 import com.bloxbean.cardano.yaci.store.utxo.storage.impl.repository.UtxoRepository;
+import com.fluidtokens.nft.borrow.model.Rent;
+import com.fluidtokens.nft.borrow.service.DatumService;
 import com.fluidtokens.nft.borrow.service.RentService;
 import com.fluidtokens.nft.borrow.util.UtxoUtil;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +24,13 @@ import java.util.Comparator;
 @Slf4j
 public class RentController {
 
+    record RentUtxo(Rent rent, Utxo utxo) {
+
+    }
+
     private final RentService rentService;
+
+    private final DatumService datumService;
 
     private final UtxoRepository utxoRepository;
 
@@ -53,7 +62,12 @@ public class RentController {
             rentUtxosStream = rentUtxosStream.filter(rentUtxo -> rentUtxo.getAmount().stream().anyMatch(amount -> amount.getQuantity().equals(BigInteger.ONE)));
         }
 
-        return ResponseEntity.ok(rentUtxosStream.toList());
+        var rentStream = rentUtxosStream.flatMap(utxo -> {
+            var datumOpt = datumService.parse(utxo.getInlineDatum());
+            return datumOpt.map(datum -> new RentUtxo(datum, utxo)).stream();
+        });
+
+        return ResponseEntity.ok(rentStream.toList());
     }
 
 }
