@@ -14,6 +14,9 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/fluidtokens}
     username: ${DB_USERNAME:fluidtokens}
     password: ${DB_PASSWORD:password}
+  jackson:
+    serialization:
+      write_dates_as_timestamps: false
 
 wallet:
   mnemonic: ${WALLET_MNEMONIC:}
