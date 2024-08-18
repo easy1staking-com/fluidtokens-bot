@@ -117,6 +117,8 @@ public class ReturnNftJob implements Runnable {
                     var utxo = UtxoUtil.toUtxo(utxoEntity);
 
                     var isNftRent = utxo.getAmount().stream().anyMatch(amount -> !amount.getUnit().equals("lovelace") && amount.getQuantity().equals(BigInteger.ONE));
+log.info("isNftRent: {}", isNftRent);
+
 
                     String inlineDatum = utxoEntity.getInlineDatum();
 
@@ -130,8 +132,11 @@ public class ReturnNftJob implements Runnable {
                             .ifPresent(newDatum -> {
                                 scriptTx.collectFrom(utxo, ConstrPlutusData.of(4, BigIntPlutusData.of(j)));
                                 if (botOperatorAddressOpt.isPresent() && isNftRent) {
+                                    log.info("paying bot operator");
                                     var newAmounts = utxo.getAmount().stream().map(amount -> {
+                                        log.info("processing amount: {}", amount);
                                         if (amount.getUnit().equals("lovelace")) {
+                                            log.info("lovelaces found");
                                             return Amount.builder()
                                                     .unit(amount.getUnit())
                                                     .quantity(amount.getQuantity().subtract(BOT_OPERATOR_FEES.getQuantity()))
@@ -140,6 +145,8 @@ public class ReturnNftJob implements Runnable {
                                             return amount;
                                         }
                                     }).toList();
+                                    log.info("old amounts: {}", utxo.getAmount());
+                                    log.info("new amounts: {}", newAmounts);
                                     scriptTx.payToContract(addressOwner.getAddress(), newAmounts, newDatum);
                                     scriptTx.payToAddress(botOperatorAddressOpt.get().getAddress(), List.of(BOT_OPERATOR_FEES));
                                 } else {

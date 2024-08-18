@@ -63,6 +63,7 @@ public class RentController {
         }
 
         var rentStream = rentUtxosStream.flatMap(utxo -> {
+            log.info("utxo: {}", utxo);
             var datumOpt = datumService.parse(utxo.getInlineDatum());
             return datumOpt.map(datum -> new RentUtxo(datum, utxo)).stream();
         });
