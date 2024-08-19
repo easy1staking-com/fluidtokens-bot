@@ -30,16 +30,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static com.fluidtokens.nft.borrow.model.Constants.SCRIPT_REF_INPUT_HASH;
+import static com.fluidtokens.nft.borrow.model.Constants.SCRIPT_REF_INPUT_INDEX;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ReturnNftJob implements Runnable {
 
     private static final Amount BOT_OPERATOR_FEES = Amount.ada(1);
-
-    private static final String SCRIPT_REF_INPUT_HASH = "2c812d5ba6d240eea79dca528f22a3854adcaac140f3151ecbcf5d945c5981e3";
-
-    private static final int SCRIPT_REF_INPUT_INDEX = 0;
 
     @Value("${dryRun}")
     private boolean dryRun;
@@ -117,8 +116,7 @@ public class ReturnNftJob implements Runnable {
                     var utxo = UtxoUtil.toUtxo(utxoEntity);
 
                     var isNftRent = utxo.getAmount().stream().anyMatch(amount -> !amount.getUnit().equals("lovelace") && amount.getQuantity().equals(BigInteger.ONE));
-log.info("isNftRent: {}", isNftRent);
-
+                    log.info("isNftRent: {}", isNftRent);
 
                     String inlineDatum = utxoEntity.getInlineDatum();
 

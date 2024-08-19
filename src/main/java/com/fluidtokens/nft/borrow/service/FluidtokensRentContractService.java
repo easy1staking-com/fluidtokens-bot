@@ -6,10 +6,12 @@ import com.bloxbean.cardano.client.exception.CborDeserializationException;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.bloxbean.cardano.client.plutus.spec.PlutusV2Script;
 import com.bloxbean.cardano.client.util.HexUtil;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Getter
 @Slf4j
 public class FluidtokensRentContractService {
 
@@ -17,18 +19,15 @@ public class FluidtokensRentContractService {
 
     private final Credential paymentCredentials;
 
+    private final PlutusV2Script poolScript;
+
     public FluidtokensRentContractService() {
-        PlutusV2Script poolScript;
         try {
             poolScript = PlutusV2Script.deserialize(new ByteString(HexUtil.decodeHexString(FLUIDTOKENS_SCRIPTS_BYTES)));
             paymentCredentials = Credential.fromScript(poolScript.getScriptHash());
         } catch (CborDeserializationException | CborSerializationException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public Credential getPaymentCredentials() {
-        return paymentCredentials;
     }
 
     public String getPaymentCredentialsHex() {
