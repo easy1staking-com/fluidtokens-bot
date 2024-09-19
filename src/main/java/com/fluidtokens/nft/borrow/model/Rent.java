@@ -1,10 +1,11 @@
 package com.fluidtokens.nft.borrow.model;
 
 import com.bloxbean.cardano.client.address.Address;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
 
-public record Rent(Address owner, Address tenant, LocalDateTime deadline) {
+public record Rent(Address owner, Address tenant, @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime deadline) {
 
 
     public boolean canBeReturned() {

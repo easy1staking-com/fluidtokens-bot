@@ -1,9 +1,9 @@
 package com.fluidtokens.nft.borrow.service;
 
 import com.bloxbean.cardano.client.account.Account;
+import com.bloxbean.cardano.client.address.Address;
 import com.bloxbean.cardano.client.address.AddressProvider;
-import com.bloxbean.cardano.client.api.model.Result;
-import com.bloxbean.cardano.client.api.model.Utxo;
+import com.bloxbean.cardano.client.api.model.Amount;
 import com.bloxbean.cardano.client.backend.blockfrost.service.BFBackendService;
 import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.function.helper.SignerProviders;
@@ -11,39 +11,52 @@ import com.bloxbean.cardano.client.plutus.spec.BigIntPlutusData;
 import com.bloxbean.cardano.client.plutus.spec.ConstrPlutusData;
 import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.ScriptTx;
+import com.bloxbean.cardano.yaci.store.utxo.storage.impl.model.UtxoId;
+import com.bloxbean.cardano.yaci.store.utxo.storage.impl.repository.UtxoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fluidtokens.nft.borrow.model.UtxoRent;
+import com.fluidtokens.nft.borrow.util.UtxoUtil;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import static com.fluidtokens.nft.borrow.model.Constants.SCRIPT_REF_INPUT_HASH;
+import static com.fluidtokens.nft.borrow.model.Constants.SCRIPT_REF_INPUT_INDEX;
 
 @Service
 @Slf4j
-//@AllArgsConstructor
+@RequiredArgsConstructor
 public class ReturnNftJob implements Runnable {
 
-    private static final String SCRIPT_REF_INPUT_HASH = "2c812d5ba6d240eea79dca528f22a3854adcaac140f3151ecbcf5d945c5981e3";
-    private static final int SCRIPT_REF_INPUT_INDEX = 0;
+    private static final Amount BOT_OPERATOR_FEES = Amount.ada(1);
 
     @Value("${dryRun}")
     private boolean dryRun;
-    @Autowired
-    private Account account;
-    @Autowired
-    private BFBackendService bfBackendService;
-    @Autowired
-    private DatumService datumService;
-    @Autowired
-    private RentService rentService;
-    @Autowired
-    private FluidtokensRentContractService fluidtokensRentContractService;
+
+    @Value("${wallet.bot-operator-fees-address}")
+    private String botOperatorFeeAddress;
+
+    private final Account account;
+
+    private final BFBackendService bfBackendService;
+
+    private final DatumService datumService;
+
+    private final RentService rentService;
+
+    private final FluidtokensRentContractService fluidtokensRentContractService;
+
+    private final UtxoRepository utxoRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -59,12 +72,14 @@ public class ReturnNftJob implements Runnable {
 
         log.info("Running");
 
+        final Optional<Address> botOperatorAddressOpt = getBotOperatorFeesAddress();
+
         var allRents = rentService.findAllRents();
 
         var nextLoan = allRents.stream()
                 .filter(utxoRent -> utxoRent.rent().isLent())
                 .min(Comparator.comparing(utxoRent -> utxoRent.rent().deadline()));
-        
+
         nextLoan.ifPresent(loan -> log.info("Next loan: {}", loan));
 
         var expiredRents = allRents
@@ -90,10 +105,20 @@ public class ReturnNftJob implements Runnable {
                 var utxoIndex = rent.transactionOutput().index();
 
                 try {
-                    Result<Utxo> txOutputResult = bfBackendService.getUtxoService().getTxOutput(utxoHash, utxoIndex);
-                    Utxo utxo = txOutputResult.getValue();
 
-                    String inlineDatum = utxo.getInlineDatum();
+                    var utxoEntityOpt = utxoRepository.findById(new UtxoId(utxoHash, utxoIndex));
+                    if (utxoEntityOpt.isEmpty()) {
+                        log.warn("could not find utxo: {}:{}", utxoHash, utxoIndex);
+                        return;
+                    }
+
+                    var utxoEntity = utxoEntityOpt.get();
+                    var utxo = UtxoUtil.toUtxo(utxoEntity);
+
+                    var isNftRent = utxo.getAmount().stream().anyMatch(amount -> !amount.getUnit().equals("lovelace") && amount.getQuantity().equals(BigInteger.ONE));
+                    log.info("isNftRent: {}", isNftRent);
+
+                    String inlineDatum = utxoEntity.getInlineDatum();
 
                     var delegationCredentials = rent.rent().owner().getDelegationCredential().get();
 
@@ -104,7 +129,27 @@ public class ReturnNftJob implements Runnable {
                     datumService.getNewDatum(inlineDatum)
                             .ifPresent(newDatum -> {
                                 scriptTx.collectFrom(utxo, ConstrPlutusData.of(4, BigIntPlutusData.of(j)));
-                                scriptTx.payToContract(addressOwner.getAddress(), utxo.getAmount(), newDatum);
+                                if (botOperatorAddressOpt.isPresent() && isNftRent) {
+                                    log.info("paying bot operator");
+                                    var newAmounts = utxo.getAmount().stream().map(amount -> {
+                                        log.info("processing amount: {}", amount);
+                                        if (amount.getUnit().equals("lovelace")) {
+                                            log.info("lovelaces found");
+                                            return Amount.builder()
+                                                    .unit(amount.getUnit())
+                                                    .quantity(amount.getQuantity().subtract(BOT_OPERATOR_FEES.getQuantity()))
+                                                    .build();
+                                        } else {
+                                            return amount;
+                                        }
+                                    }).toList();
+                                    log.info("old amounts: {}", utxo.getAmount());
+                                    log.info("new amounts: {}", newAmounts);
+                                    scriptTx.payToContract(addressOwner.getAddress(), newAmounts, newDatum);
+                                    scriptTx.payToAddress(botOperatorAddressOpt.get().getAddress(), List.of(BOT_OPERATOR_FEES));
+                                } else {
+                                    scriptTx.payToContract(addressOwner.getAddress(), utxo.getAmount(), newDatum);
+                                }
                             });
 
                 } catch (Exception e) {
@@ -138,6 +183,18 @@ public class ReturnNftJob implements Runnable {
 
         }
         log.info("Completed");
+    }
+
+    private Optional<Address> getBotOperatorFeesAddress() {
+        if (botOperatorFeeAddress != null && botOperatorFeeAddress.startsWith("addr1")) {
+            try {
+                return Optional.of(new Address(botOperatorFeeAddress));
+            } catch (Exception e) {
+                log.warn("botOperatorFeeAddress must be a shelly address: {}", botOperatorFeeAddress);
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
     }
 
 }
