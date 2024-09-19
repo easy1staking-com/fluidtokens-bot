@@ -20,7 +20,6 @@ spring:
 
 wallet:
   mnemonic: ${WALLET_MNEMONIC:}
-  bot-operator-fees-address: ${BOT_OPERATOR_FEES_ADDRESS:}
 
 blockfrost:
   url: ${BLOCKFROST_URL:https://cardano-mainnet.blockfrost.io/api/v0/}

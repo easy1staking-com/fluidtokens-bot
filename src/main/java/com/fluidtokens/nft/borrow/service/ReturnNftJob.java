@@ -1,7 +1,6 @@
 package com.fluidtokens.nft.borrow.service;
 
 import com.bloxbean.cardano.client.account.Account;
-import com.bloxbean.cardano.client.address.Address;
 import com.bloxbean.cardano.client.address.AddressProvider;
 import com.bloxbean.cardano.client.api.model.Amount;
 import com.bloxbean.cardano.client.backend.blockfrost.service.BFBackendService;
@@ -26,8 +25,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.fluidtokens.nft.borrow.model.Constants.SCRIPT_REF_INPUT_HASH;
@@ -38,13 +35,8 @@ import static com.fluidtokens.nft.borrow.model.Constants.SCRIPT_REF_INPUT_INDEX;
 @RequiredArgsConstructor
 public class ReturnNftJob implements Runnable {
 
-    private static final Amount BOT_OPERATOR_FEES = Amount.ada(1);
-
     @Value("${dryRun}")
     private boolean dryRun;
-
-    @Value("${wallet.bot-operator-fees-address}")
-    private String botOperatorFeeAddress;
 
     private final Account account;
 
@@ -71,8 +63,6 @@ public class ReturnNftJob implements Runnable {
     public void run() {
 
         log.info("Running");
-
-        final Optional<Address> botOperatorAddressOpt = getBotOperatorFeesAddress();
 
         var allRents = rentService.findAllRents();
 
@@ -129,27 +119,7 @@ public class ReturnNftJob implements Runnable {
                     datumService.getNewDatum(inlineDatum)
                             .ifPresent(newDatum -> {
                                 scriptTx.collectFrom(utxo, ConstrPlutusData.of(4, BigIntPlutusData.of(j)));
-                                if (botOperatorAddressOpt.isPresent() && isNftRent) {
-                                    log.info("paying bot operator");
-                                    var newAmounts = utxo.getAmount().stream().map(amount -> {
-                                        log.info("processing amount: {}", amount);
-                                        if (amount.getUnit().equals("lovelace")) {
-                                            log.info("lovelaces found");
-                                            return Amount.builder()
-                                                    .unit(amount.getUnit())
-                                                    .quantity(amount.getQuantity().subtract(BOT_OPERATOR_FEES.getQuantity()))
-                                                    .build();
-                                        } else {
-                                            return amount;
-                                        }
-                                    }).toList();
-                                    log.info("old amounts: {}", utxo.getAmount());
-                                    log.info("new amounts: {}", newAmounts);
-                                    scriptTx.payToContract(addressOwner.getAddress(), newAmounts, newDatum);
-                                    scriptTx.payToAddress(botOperatorAddressOpt.get().getAddress(), List.of(BOT_OPERATOR_FEES));
-                                } else {
-                                    scriptTx.payToContract(addressOwner.getAddress(), utxo.getAmount(), newDatum);
-                                }
+                                scriptTx.payToContract(addressOwner.getAddress(), utxo.getAmount(), newDatum);
                             });
 
                 } catch (Exception e) {
@@ -183,18 +153,6 @@ public class ReturnNftJob implements Runnable {
 
         }
         log.info("Completed");
-    }
-
-    private Optional<Address> getBotOperatorFeesAddress() {
-        if (botOperatorFeeAddress != null && botOperatorFeeAddress.startsWith("addr1")) {
-            try {
-                return Optional.of(new Address(botOperatorFeeAddress));
-            } catch (Exception e) {
-                log.warn("botOperatorFeeAddress must be a shelly address: {}", botOperatorFeeAddress);
-                return Optional.empty();
-            }
-        }
-        return Optional.empty();
     }
 
 }
