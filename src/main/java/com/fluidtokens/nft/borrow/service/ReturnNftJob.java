@@ -76,13 +76,10 @@ public class ReturnNftJob implements Runnable {
                 .stream()
                 .filter(utxoRent -> utxoRent.rent().canBeReturned())
                 .sorted(Comparator.comparing(UtxoRent::transactionOutput))
+                .limit(10)
                 .toList();
 
-        if (expiredRents.size() > 10) {
-            expiredRents = expiredRents.subList(0, 9);
-        }
-
-        if (!expiredRents.isEmpty()) {
+        while (!expiredRents.isEmpty()) {
 
             final ScriptTx scriptTx = new ScriptTx()
                     .readFrom(SCRIPT_REF_INPUT_HASH, SCRIPT_REF_INPUT_INDEX);
@@ -150,6 +147,14 @@ public class ReturnNftJob implements Runnable {
                 transaction.completeAndWait();
             }
 
+            Thread.sleep(30000L);
+
+            expiredRents = allRents
+                    .stream()
+                    .filter(utxoRent -> utxoRent.rent().canBeReturned())
+                    .sorted(Comparator.comparing(UtxoRent::transactionOutput))
+                    .limit(10)
+                    .toList();
 
         }
         log.info("Completed");
