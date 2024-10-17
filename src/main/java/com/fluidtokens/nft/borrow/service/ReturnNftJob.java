@@ -2,7 +2,6 @@ package com.fluidtokens.nft.borrow.service;
 
 import com.bloxbean.cardano.client.account.Account;
 import com.bloxbean.cardano.client.address.AddressProvider;
-import com.bloxbean.cardano.client.api.model.Amount;
 import com.bloxbean.cardano.client.backend.blockfrost.service.BFBackendService;
 import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.function.helper.SignerProviders;
@@ -25,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.fluidtokens.nft.borrow.model.Constants.SCRIPT_REF_INPUT_HASH;
@@ -57,13 +57,7 @@ public class ReturnNftJob implements Runnable {
         log.info("Running in dry-run mode: {}", dryRun);
     }
 
-    @SneakyThrows
-    @Override
-    @Scheduled(timeUnit = TimeUnit.MINUTES, initialDelay = 2, fixedDelay = 15)
-    public void run() {
-
-        log.info("Running");
-
+    private List<UtxoRent> getExpiredRents() {
         var allRents = rentService.findAllRents();
 
         var nextLoan = allRents.stream()
@@ -72,12 +66,22 @@ public class ReturnNftJob implements Runnable {
 
         nextLoan.ifPresent(loan -> log.info("Next loan: {}", loan));
 
-        var expiredRents = allRents
+        return allRents
                 .stream()
                 .filter(utxoRent -> utxoRent.rent().canBeReturned())
                 .sorted(Comparator.comparing(UtxoRent::transactionOutput))
                 .limit(10)
                 .toList();
+    }
+
+    @SneakyThrows
+    @Override
+    @Scheduled(timeUnit = TimeUnit.MINUTES, initialDelay = 2, fixedDelay = 15)
+    public void run() {
+
+        log.info("Running");
+
+        List<UtxoRent> expiredRents = getExpiredRents();
 
         while (!expiredRents.isEmpty()) {
 
@@ -149,12 +153,7 @@ public class ReturnNftJob implements Runnable {
 
             Thread.sleep(30000L);
 
-            expiredRents = allRents
-                    .stream()
-                    .filter(utxoRent -> utxoRent.rent().canBeReturned())
-                    .sorted(Comparator.comparing(UtxoRent::transactionOutput))
-                    .limit(10)
-                    .toList();
+            expiredRents = getExpiredRents();
 
         }
         log.info("Completed");
