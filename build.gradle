@@ -27,12 +27,12 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-    implementation 'com.bloxbean.cardano:yaci-store-spring-boot-starter:0.1.0-rc5'
-    implementation 'com.bloxbean.cardano:yaci-store-utxo-spring-boot-starter:0.1.0-rc5'
+    implementation 'com.bloxbean.cardano:yaci-store-spring-boot-starter:0.1.1'
+    implementation 'com.bloxbean.cardano:yaci-store-utxo-spring-boot-starter:0.1.1'
 
 
-    implementation('com.bloxbean.cardano:cardano-client-lib:0.6.0')
-    implementation('com.bloxbean.cardano:cardano-client-backend-blockfrost:0.6.0')
+    implementation('com.bloxbean.cardano:cardano-client-lib:0.6.2')
+    implementation('com.bloxbean.cardano:cardano-client-backend-blockfrost:0.6.2')
 
     testImplementation('com.bloxbean.cardano:aiken-java-binding:0.0.8')
 
