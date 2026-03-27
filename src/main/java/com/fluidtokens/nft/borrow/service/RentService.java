@@ -27,6 +27,7 @@ public class RentService {
                 .findUnspentByOwnerPaymentCredential(fluidtokensRentContractService.getPaymentCredentialsHex(), Pageable.unpaged())
                 .stream()
                 .flatMap(List::stream)
+                .filter(utxo -> utxo.getInlineDatum() != null)
                 .flatMap(utxo -> service.parse(utxo.getInlineDatum()).map(rent -> new UtxoRent(new TransactionOutput(utxo.getTxHash(), utxo.getOutputIndex()), rent)).stream())
                 .sorted(Comparator.comparing(utxoRent -> utxoRent.rent().deadline()))
                 .toList();
